@@ -1,0 +1,554 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>เครื่องร่าง Prompt สำหรับเว็บออฟไลน์</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#EEF1F6; --panel:#FFFFFF; --ink:#18223A; --ink-2:#4A5570; --line:#D5DBE8;
+  --accent:#145C8E; --accent-ink:#FFFFFF; --accent-soft:#DCEBF7;
+  --sheet:#1B2440; --sheet-ink:#E8ECF5; --sheet-dim:#8A95B3; --sheet-key:#9ED3FF;
+  --ok:#1D7A4C; --focus:#F2A93B;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --bg:#0F1525; --panel:#172036; --ink:#E6EAF4; --ink-2:#A3ACC6; --line:#2B3552;
+    --accent:#6FB6EE; --accent-ink:#0B1324; --accent-soft:#1E3350;
+    --sheet:#0A0F1D; --sheet-ink:#E6EAF4; --sheet-dim:#6F7A99; --sheet-key:#8CCBFF;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --bg:#0F1525; --panel:#172036; --ink:#E6EAF4; --ink-2:#A3ACC6; --line:#2B3552;
+  --accent:#6FB6EE; --accent-ink:#0B1324; --accent-soft:#1E3350;
+  --sheet:#0A0F1D; --sheet-ink:#E6EAF4; --sheet-dim:#6F7A99; --sheet-key:#8CCBFF;
+}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*,*::before,*::after{box-sizing:inherit}
+html,body{height:100%}
+body{
+  margin:0; background:var(--bg); color:var(--ink);
+  font-family:"IBM Plex Sans Thai","Noto Sans Thai","Sarabun",system-ui,sans-serif;
+  font-size:16px; line-height:1.65;
+}
+button,input,select,textarea{font:inherit;color:inherit}
+:focus-visible{outline:3px solid var(--focus);outline-offset:2px}
+
+.wrap{max-width:1240px;margin:0 auto;padding:28px 20px 60px}
+header{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:16px;margin-bottom:26px}
+h1{font-size:clamp(1.6rem,3vw,2.3rem);font-weight:700;line-height:1.2;margin:0;letter-spacing:-.01em;max-width:22ch}
+.lead{margin:8px 0 0;color:var(--ink-2);max-width:60ch}
+.step-nav{display:flex;gap:10px;flex-wrap:wrap;color:var(--ink-2);font-size:.95rem}
+.step-nav span{padding:6px 12px;border:1px solid var(--line);border-radius:999px;background:var(--panel)}
+.step-nav span b{color:var(--accent)}
+
+.grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:24px;align-items:start}
+@media (max-width:900px){.grid{grid-template-columns:1fr}}
+
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:22px}
+fieldset{border:0;padding:0;margin:0 0 22px}
+fieldset:last-of-type{margin-bottom:0}
+legend{font-weight:600;font-size:1.05rem;padding:0;margin-bottom:4px}
+.hint{color:var(--ink-2);font-size:.9rem;margin:0 0 10px}
+label.f{display:block;font-weight:500;margin:12px 0 6px}
+input[type=text],textarea,select{
+  width:100%;background:var(--bg);border:1px solid var(--line);border-radius:9px;
+  padding:10px 12px;color:var(--ink)
+}
+textarea{min-height:84px;resize:vertical}
+input::placeholder,textarea::placeholder{color:var(--ink-2);opacity:.75}
+
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
+.chip{
+  border:1px solid var(--line);background:var(--panel);border-radius:999px;
+  padding:6px 13px;cursor:pointer;font-size:.93rem;line-height:1.3
+}
+.chip[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.chip:hover{border-color:var(--accent)}
+
+.featlist{list-style:none;padding:0;margin:10px 0 0;display:flex;flex-direction:column;gap:8px}
+.featlist li{display:flex;gap:10px;align-items:flex-start;background:var(--bg);border:1px solid var(--line);border-radius:9px;padding:8px 10px}
+.featlist li .num{flex:0 0 auto;min-width:1.6em;font-weight:600;color:var(--accent)}
+.featlist li .txt{flex:1 1 auto;word-break:break-word}
+.featlist li button{flex:0 0 auto;border:0;background:transparent;color:var(--ink-2);cursor:pointer;padding:0 4px;font-size:1.1rem;line-height:1}
+.featlist li button:hover{color:var(--ink)}
+.addrow{display:flex;gap:8px;margin-top:8px}
+.addrow input{flex:1 1 auto}
+.btn{
+  border:1px solid var(--line);background:var(--panel);border-radius:9px;
+  padding:10px 16px;cursor:pointer;font-weight:500;white-space:nowrap
+}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn.primary:hover{filter:brightness(1.08)}
+.btn:hover{border-color:var(--accent)}
+.empty{color:var(--ink-2);font-size:.93rem;padding:10px 0 0}
+
+.radio-row{display:flex;flex-wrap:wrap;gap:14px;margin-top:6px}
+.radio-row label{display:flex;align-items:center;gap:6px;cursor:pointer}
+
+.sheet-wrap{position:sticky;top:calc(16px + env(safe-area-inset-top,0px))}
+.sheet{background:var(--sheet);color:var(--sheet-ink);border-radius:14px;padding:0;overflow:hidden;border:1px solid var(--line)}
+.sheet-top{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:14px 18px;border-bottom:1px solid rgba(255,255,255,.08)}
+.sheet-top h2{margin:0;font-size:1rem;font-weight:600}
+.sheet-top .meta{color:var(--sheet-dim);font-size:.85rem}
+.sheet-actions{display:flex;gap:8px;padding:12px 18px;border-top:1px solid rgba(255,255,255,.08);flex-wrap:wrap}
+.sheet-actions .btn{background:transparent;border-color:rgba(255,255,255,.22);color:var(--sheet-ink)}
+.sheet-actions .btn.primary{background:var(--sheet-key);border-color:var(--sheet-key);color:#07111F}
+pre{
+  margin:0;padding:18px;max-height:62vh;overflow:auto;white-space:pre-wrap;word-break:break-word;
+  font-family:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.86rem;line-height:1.7
+}
+pre .k{color:var(--sheet-key);font-weight:500}
+pre .d{color:var(--sheet-dim)}
+.toast{
+  position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom,0px));transform:translate(-50%,20px);
+  background:var(--ok);color:#fff;padding:10px 18px;border-radius:999px;opacity:0;pointer-events:none;
+  transition:opacity .2s,transform .2s;font-weight:500
+}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+@media (prefers-reduced-motion:reduce){.toast{transition:none}}
+.foot{margin-top:28px;color:var(--ink-2);font-size:.9rem;max-width:70ch}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <div>
+    <h1>บอกว่าอยากได้ระบบอะไร เดี๋ยวร่าง Prompt ให้เอาไปสั่ง AI</h1>
+    <p class="lead">สำหรับเว็บแบบไฟล์เดียว (HTML เดียวจบ) ที่เปิดบนเครื่องได้โดยไม่ต้องต่ออินเทอร์เน็ต กรอกด้านซ้าย แล้ว Prompt ด้านขวาจะอัปเดตเองทันที</p>
+  </div>
+  <nav class="step-nav" aria-label="ขั้นตอน">
+    <span><b>1</b> กรอกความต้องการ</span>
+    <span><b>2</b> คัดลอก Prompt</span>
+    <span><b>3</b> วางให้ AI สร้างเว็บ</span>
+  </nav>
+</header>
+
+<div class="grid">
+<!-- ===== ฟอร์ม ===== -->
+<form class="panel" id="form" onsubmit="return false">
+
+  <fieldset>
+    <legend>ระบบที่อยากได้</legend>
+    <label class="f" for="name">ชื่อระบบ</label>
+    <input type="text" id="name" placeholder="เช่น ระบบจัดการสต๊อกร้านกาแฟ">
+    <label class="f" for="purpose">ใช้ทำอะไร / แก้ปัญหาอะไร</label>
+    <textarea id="purpose" placeholder="เช่น ใช้บันทึกวัตถุดิบเข้าออกในแต่ละวัน เพื่อรู้ว่าของจะหมดเมื่อไหร่ ไม่ต้องจดใส่สมุดแล้วหาย"></textarea>
+    <label class="f" for="users">ใครเป็นคนใช้</label>
+    <input type="text" id="users" placeholder="เช่น เจ้าของร้านกับพนักงาน 2 คน ใช้บนแท็บเล็ตหน้าร้าน">
+  </fieldset>
+
+  <fieldset>
+    <legend>ฟังก์ชันที่ต้องมี</legend>
+    <p class="hint">เลือกจากที่มีให้ หรือพิมพ์เพิ่มเองก็ได้ เรียงบนลงล่างตามความสำคัญ</p>
+    <div class="chips" id="featPresets"></div>
+    <ul class="featlist" id="featList"></ul>
+    <p class="empty" id="featEmpty">ยังไม่มีฟังก์ชัน เลือกจากด้านบนหรือพิมพ์เพิ่มด้านล่าง</p>
+    <div class="addrow">
+      <input type="text" id="featInput" placeholder="พิมพ์ฟังก์ชันเพิ่ม แล้วกด Enter">
+      <button class="btn" type="button" id="featAdd">เพิ่ม</button>
+    </div>
+  </fieldset>
+
+  <fieldset>
+    <legend>ข้อมูลที่ต้องเก็บ</legend>
+    <p class="hint">ระบุเป็นรายการหรือฟิลด์หลัก ๆ ถ้าไม่แน่ใจปล่อยว่างได้ AI จะออกแบบให้</p>
+    <textarea id="data" placeholder="เช่น วัตถุดิบ (ชื่อ, หน่วย, จำนวนคงเหลือ, จุดสั่งซื้อ), รายการเข้า/ออก (วันที่, วัตถุดิบ, จำนวน, หมายเหตุ)"></textarea>
+    <label class="f">เก็บข้อมูลไว้ที่ไหน</label>
+    <div class="radio-row" id="storage">
+      <label><input type="radio" name="storage" value="local" checked> ในเบราว์เซอร์ (localStorage/IndexedDB) ปิดเปิดแล้วข้อมูลยังอยู่</label>
+      <label><input type="radio" name="storage" value="file"> บันทึก/เปิดจากไฟล์ (.json) เป็นหลัก</label>
+      <label><input type="radio" name="storage" value="none"> ไม่ต้องเก็บ ใช้แล้วทิ้ง</label>
+    </div>
+  </fieldset>
+
+  <fieldset>
+    <legend>การนำเข้าข้อมูลจากภายนอก</legend>
+    <p class="hint">ระบบต้องรับไฟล์จากที่อื่นเข้ามาไหม เช่น รายชื่อจาก Excel หรือรูปสินค้า</p>
+    <div class="radio-row" id="imp">
+      <label><input type="radio" name="imp" value="no" checked> ไม่ต้องนำเข้า</label>
+      <label><input type="radio" name="imp" value="yes"> ต้องนำเข้าได้</label>
+    </div>
+    <div id="impBox" hidden>
+      <label class="f">นามสกุลไฟล์ที่ต้องรองรับ (เลือกได้หลายอัน)</label>
+      <div class="chips" id="impTypes">
+        <button type="button" class="chip" data-v=".csv" aria-pressed="false">.csv</button>
+        <button type="button" class="chip" data-v=".xlsx / .xls (Excel)" aria-pressed="false">.xlsx / .xls</button>
+        <button type="button" class="chip" data-v=".json" aria-pressed="false">.json</button>
+        <button type="button" class="chip" data-v=".txt" aria-pressed="false">.txt</button>
+        <button type="button" class="chip" data-v=".xml" aria-pressed="false">.xml</button>
+        <button type="button" class="chip" data-v=".pdf" aria-pressed="false">.pdf</button>
+        <button type="button" class="chip" data-v=".jpg / .png (รูปภาพ)" aria-pressed="false">.jpg / .png</button>
+        <button type="button" class="chip" data-v=".docx" aria-pressed="false">.docx</button>
+      </div>
+      <label class="f" for="impOther">นามสกุลอื่นที่ไม่มีในรายการ</label>
+      <input type="text" id="impOther" placeholder="เช่น .ics, .gpx, .md (คั่นด้วยลูกน้ำ)">
+      <label class="f" for="impDesc">นำเข้าอะไร และเอาไปใช้ต่ออย่างไร</label>
+      <textarea id="impDesc" placeholder="เช่น นำเข้ารายชื่อสินค้าจากไฟล์ Excel ที่มีคอลัมน์ รหัส ชื่อ ราคา จำนวน ถ้ารหัสซ้ำให้อัปเดตแทนการเพิ่มใหม่"></textarea>
+    </div>
+  </fieldset>
+
+  <fieldset>
+    <legend>การส่งออกข้อมูล</legend>
+    <p class="hint">ระบบต้องส่งออกข้อมูลเป็นไฟล์ไปใช้ที่อื่นไหม เช่น เอารายงานไปเปิดใน Excel หรือส่งให้คนอื่น</p>
+    <div class="radio-row" id="exp">
+      <label><input type="radio" name="exp" value="no" checked> ไม่ต้องส่งออก</label>
+      <label><input type="radio" name="exp" value="yes"> ต้องส่งออกได้</label>
+    </div>
+    <div id="expBox" hidden>
+      <label class="f">นามสกุลไฟล์ที่ต้องส่งออกได้ (เลือกได้หลายอัน)</label>
+      <div class="chips" id="expTypes">
+        <button type="button" class="chip" data-v=".csv" aria-pressed="false">.csv</button>
+        <button type="button" class="chip" data-v=".xlsx (Excel)" aria-pressed="false">.xlsx</button>
+        <button type="button" class="chip" data-v=".json" aria-pressed="false">.json</button>
+        <button type="button" class="chip" data-v=".txt" aria-pressed="false">.txt</button>
+        <button type="button" class="chip" data-v=".pdf (ผ่านหน้าต่างพิมพ์ของเบราว์เซอร์)" aria-pressed="false">.pdf</button>
+        <button type="button" class="chip" data-v=".html" aria-pressed="false">.html</button>
+        <button type="button" class="chip" data-v=".png (ภาพกราฟหรือตาราง)" aria-pressed="false">.png</button>
+        <button type="button" class="chip" data-v=".md" aria-pressed="false">.md</button>
+      </div>
+      <label class="f" for="expOther">นามสกุลอื่นที่ไม่มีในรายการ</label>
+      <input type="text" id="expOther" placeholder="เช่น .ics, .xml (คั่นด้วยลูกน้ำ)">
+      <label class="f" for="expDesc">ส่งออกอะไร และเอาไปใช้ต่ออย่างไร</label>
+      <textarea id="expDesc" placeholder="เช่น ส่งออกรายการเข้าออกของเดือนที่เลือก เป็น .csv เพื่อส่งให้ฝ่ายบัญชี คอลัมน์เรียงตาม วันที่, วัตถุดิบ, จำนวน, หมายเหตุ"></textarea>
+    </div>
+  </fieldset>
+
+  <fieldset>
+    <legend>หน้าตาและภาษา</legend>
+    <label class="f">ภาษาของหน้าเว็บ</label>
+    <div class="radio-row" id="lang">
+      <label><input type="radio" name="lang" value="th" checked> ไทย</label>
+      <label><input type="radio" name="lang" value="en"> อังกฤษ</label>
+      <label><input type="radio" name="lang" value="both"> สลับได้สองภาษา</label>
+    </div>
+    <label class="f">อุปกรณ์ที่ใช้เป็นหลัก</label>
+    <div class="chips" id="devices">
+      <button type="button" class="chip" data-v="คอมพิวเตอร์" aria-pressed="true">คอมพิวเตอร์</button>
+      <button type="button" class="chip" data-v="แท็บเล็ต" aria-pressed="false">แท็บเล็ต</button>
+      <button type="button" class="chip" data-v="มือถือ" aria-pressed="false">มือถือ</button>
+    </div>
+    <label class="f" for="style">สไตล์ที่ชอบ (ถ้ามี)</label>
+    <input type="text" id="style" placeholder="เช่น เรียบ ๆ อ่านง่าย ตัวหนังสือใหญ่ โทนสีเขียวอ่อน มีโหมดมืด">
+  </fieldset>
+
+  <fieldset>
+    <legend>เงื่อนไขเพิ่มเติม</legend>
+    <div class="chips" id="extras">
+      <button type="button" class="chip" data-v="มีข้อมูลตัวอย่างให้ทดลองใช้ทันที" aria-pressed="true">มีข้อมูลตัวอย่าง</button>
+      <button type="button" class="chip" data-v="พิมพ์หรือบันทึกเป็น PDF ได้จากเบราว์เซอร์" aria-pressed="false">พิมพ์ / PDF</button>
+      <button type="button" class="chip" data-v="ใช้คีย์บอร์ดอย่างเดียวได้ครบทุกฟังก์ชัน" aria-pressed="false">ใช้คีย์บอร์ดได้</button>
+      <button type="button" class="chip" data-v="มีโหมดมืดตามการตั้งค่าเครื่อง" aria-pressed="false">โหมดมืด</button>
+      <button type="button" class="chip" data-v="ก่อนลบข้อมูลต้องถามยืนยันทุกครั้ง" aria-pressed="true">ถามก่อนลบ</button>
+      <button type="button" class="chip" data-v="มีคำอธิบายวิธีใช้สั้น ๆ ในหน้าเว็บ" aria-pressed="false">มีคู่มือในตัว</button>
+    </div>
+    <label class="f" for="notes">อย่างอื่นที่อยากบอก AI</label>
+    <textarea id="notes" placeholder="เช่น ห้ามใช้ฟอนต์จากอินเทอร์เน็ต, ตัวเลขเงินให้มีลูกน้ำคั่นหลักพัน, เอาแบบที่พนักงานใหม่ใช้เป็นภายใน 5 นาที"></textarea>
+  </fieldset>
+
+  <fieldset>
+    <legend>ภาษาของ Prompt</legend>
+    <p class="hint">Prompt เป็นภาษาอังกฤษมักได้ผลลัพธ์นิ่งกว่า แต่ภาษาไทยก็ใช้ได้กับ AI สมัยใหม่</p>
+    <div class="radio-row" id="plang">
+      <label><input type="radio" name="plang" value="th" checked> ไทย</label>
+      <label><input type="radio" name="plang" value="en"> อังกฤษ</label>
+    </div>
+  </fieldset>
+</form>
+
+<!-- ===== ผลลัพธ์ ===== -->
+<div class="sheet-wrap">
+  <section class="sheet" aria-live="polite">
+    <div class="sheet-top">
+      <h2>Prompt ที่ได้</h2>
+      <span class="meta" id="count"></span>
+    </div>
+    <pre id="out"></pre>
+    <div class="sheet-actions">
+      <button class="btn primary" type="button" id="copy">คัดลอก Prompt</button>
+      <button class="btn" type="button" id="download">ดาวน์โหลดเป็น .txt</button>
+      <button class="btn" type="button" id="reset">ล้างฟอร์ม</button>
+    </div>
+  </section>
+  <p class="foot">วิธีใช้ต่อ: วาง Prompt นี้ให้ AI (Claude, ChatGPT, Gemini ฯลฯ) แล้วขอไฟล์ .html กลับมา บันทึกลงเครื่อง ดับเบิลคลิกเปิดได้เลย ถ้าผลลัพธ์ยังไม่ตรงใจ ให้คุยต่อในแชทเดิมว่าอยากแก้ตรงไหน</p>
+</div>
+</div>
+</div>
+<div class="toast" id="toast">คัดลอกแล้ว</div>
+
+<script>
+(function(){
+  const $=id=>document.getElementById(id);
+  const presets=[
+    "เพิ่ม / แก้ไข / ลบรายการ","ค้นหาและกรองข้อมูล","จัดเรียงตามคอลัมน์",
+    "สรุปยอดหรือสถิติในหน้าแรก","กราฟแสดงแนวโน้ม",
+    "สำรองและกู้คืนข้อมูลทั้งหมด (Backup / Restore)","แจ้งเตือนเมื่อถึงเงื่อนไข",
+    "ปฏิทินหรือมุมมองรายวัน","แบ่งหมวดหมู่ / แท็ก","ยกเลิกการกระทำล่าสุด (Undo)","พิมพ์รายงาน"
+  ];
+  let features=[];
+
+  // ---------- presets ----------
+  const pWrap=$("featPresets");
+  presets.forEach(p=>{
+    const b=document.createElement("button");
+    b.type="button";b.className="chip";b.textContent=p;b.setAttribute("aria-pressed","false");
+    b.addEventListener("click",()=>{
+      const i=features.indexOf(p);
+      if(i>=0){features.splice(i,1)}else{features.push(p)}
+      renderFeatures();update();
+    });
+    pWrap.appendChild(b);
+  });
+
+  function renderFeatures(){
+    const ul=$("featList");ul.innerHTML="";
+    features.forEach((f,i)=>{
+      const li=document.createElement("li");
+      li.innerHTML=`<span class="num">${i+1}.</span><span class="txt"></span><button type="button" aria-label="ลบ">×</button>`;
+      li.querySelector(".txt").textContent=f;
+      li.querySelector("button").addEventListener("click",()=>{features.splice(i,1);renderFeatures();update();});
+      ul.appendChild(li);
+    });
+    $("featEmpty").style.display=features.length?"none":"block";
+    pWrap.querySelectorAll(".chip").forEach(c=>c.setAttribute("aria-pressed",String(features.includes(c.textContent))));
+  }
+  function addFeature(){
+    const v=$("featInput").value.trim();
+    if(!v)return;
+    if(!features.includes(v))features.push(v);
+    $("featInput").value="";renderFeatures();update();
+  }
+  $("featAdd").addEventListener("click",addFeature);
+  $("featInput").addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault();addFeature();}});
+
+  // ---------- toggle chips ----------
+  $("imp").addEventListener("change",()=>{$("impBox").hidden=radio("imp")!=="yes";});
+  $("exp").addEventListener("change",()=>{$("expBox").hidden=radio("exp")!=="yes";});
+  ["devices","extras","impTypes","expTypes"].forEach(id=>{
+    $(id).querySelectorAll(".chip").forEach(c=>c.addEventListener("click",()=>{
+      c.setAttribute("aria-pressed",c.getAttribute("aria-pressed")==="true"?"false":"true");update();
+    }));
+  });
+  const pressed=id=>[...$(id).querySelectorAll('.chip[aria-pressed="true"]')].map(c=>c.dataset.v);
+  const radio=name=>(document.querySelector(`input[name="${name}"]:checked`)||{}).value;
+
+  // ---------- prompt ----------
+  function build(){
+    const name=$("name").value.trim(), purpose=$("purpose").value.trim(), users=$("users").value.trim(),
+          data=$("data").value.trim(), style=$("style").value.trim(), notes=$("notes").value.trim();
+    const storage=radio("storage"), lang=radio("lang"), plang=radio("plang");
+    const devices=pressed("devices"), extras=pressed("extras");
+    const hasData=storage!=="none";
+    const impYes=radio("imp")==="yes";
+    const impTypes=pressed("impTypes").concat($("impOther").value.split(",").map(s=>s.trim()).filter(Boolean));
+    const impDesc=$("impDesc").value.trim();
+    const expYes=radio("exp")==="yes";
+    const expTypes=pressed("expTypes").concat($("expOther").value.split(",").map(s=>s.trim()).filter(Boolean));
+    const expDesc=$("expDesc").value.trim();
+
+    if(plang==="en"){
+      const langTxt={th:"Thai",en:"English",both:"Thai and English, switchable from the UI"}[lang];
+      const storTxt={
+        local:"Persist all data in the browser (localStorage, or IndexedDB if the data may grow large) so it survives closing and reopening the file. Also provide Export and Import of the entire dataset as a .json file for backup and moving between machines.",
+        file:"The primary way to save and load is a .json file: a Save button downloads the current data, an Open button loads a file the user picks. Keep a working copy in localStorage so an accidental refresh loses nothing.",
+        none:"No persistence needed. Everything lives in memory for the session."
+      }[storage];
+      return [
+`You are a senior front-end engineer. Build a complete, self-contained single-page web app that I can run on my computer by opening one .html file, with no internet connection.`,
+``,
+`# What the app is`,
+`Name: ${name||"(please propose a short name)"}`,
+`Purpose: ${purpose||"(not specified; infer from the features below and state your assumption at the top of your reply)"}`,
+`Who uses it: ${users||"a single non-technical user"}`,
+`Primary devices: ${devices.length?devices.join(", "):"desktop"}`,
+``,
+`# Required features (in priority order)`,
+features.length?features.map((f,i)=>`${i+1}. ${f}`).join("\n"):`(none listed; propose the 4 to 6 features such an app most needs and build them)`,
+``,
+`# Data`,
+data?`Data to store:\n${data}`:`Design the data model yourself from the purpose and features; keep it as simple as possible and list the fields in a short comment at the top of the script.`,
+storTxt,
+``,
+`# Importing external files`,
+impYes?[
+`The app must let the user import files from their computer via a file picker and drag-and-drop.`,
+`Supported file types: ${impTypes.length?impTypes.join(", "):"(not specified; choose the formats that make sense for the data above and list them)"}`,
+impDesc?`What is imported and how it is used:\n${impDesc}`:`Map the imported content onto the data model above; show a preview and let the user confirm before anything is saved.`,
+`Parse everything in the browser with no libraries. For Excel files, if a dependency-free parse isn’t feasible, ask the user to save as .csv instead and say so clearly in the UI. Report rows that could not be read, with the reason, instead of skipping them silently.`
+].join("\n"):`No import of external files is needed. Do not add an import feature.`,
+``,
+`# Exporting data to files`,
+expYes?[
+`The app must let the user export data as files downloaded to their computer.`,
+`Export file types: ${expTypes.length?expTypes.join(", "):"(not specified; choose the formats that make sense for the data above and list them)"}`,
+expDesc?`What is exported and how it will be used:\n${expDesc}`:`Let the user choose what to export (everything, the current filtered view, or a selected date range) and name the file with the app name and the date.`,
+`Generate every file in the browser with no libraries: CSV must open cleanly in Excel (UTF-8 with BOM, quoted fields); for .xlsx, if a dependency-free writer isn’t feasible, produce CSV and say so in the UI; PDF goes through the browser’s print dialog with a dedicated print stylesheet.`
+].join("\n"):`No export to files is needed. Do not add an export feature.`,
+``,
+`# Interface`,
+`- UI language: ${langTxt}.`,
+style?`- Visual style: ${style}.`:`- Visual style: clean and readable; good spacing, clear hierarchy, nothing decorative that doesn’t help the task.`,
+`- Responsive: works at phone, tablet and desktop widths; nothing overflows horizontally.`,
+`- Every action gives feedback (a short status message or visible change). Empty states explain what to do first. Errors say what went wrong and how to fix it.`,
+extras.length?extras.map(e=>`- ${e}`).join("\n"):null,
+notes?`\n# Additional requirements\n${notes}`:null,
+``,
+`# Hard technical constraints`,
+`- Exactly ONE file: index.html containing all HTML, CSS and JavaScript inline. No build step, no frameworks, no npm.`,
+`- Zero network access: no CDN links, no web fonts, no external images, no API calls. Use system fonts and inline SVG for icons.`,
+`- Must work when opened directly via file:// in current Chrome, Edge, Firefox and Safari.`,
+`- Plain modern JavaScript (ES2020+), no TypeScript, no external libraries.`,
+hasData?`- Never lose user data silently: validate before saving, confirm before destructive actions, and keep Export working at all times.`:null,
+`- Keep the code organized: small named functions, a single state object, one render function, comments only where intent isn’t obvious.`,
+``,
+`# How to answer`,
+`1. Start with 3 to 5 lines listing the assumptions you made.`,
+`2. Then give the full index.html in one code block, complete and runnable, no placeholders like “// rest of code here”.`,
+`3. End with 3 short lines on how to use it. If the file would be too long for one reply, say so and send it in clearly numbered parts that concatenate cleanly.`
+      ].filter(x=>x!==null).join("\n");
+    }
+
+    // ---------- Thai ----------
+    const langTxt={th:"ภาษาไทย",en:"ภาษาอังกฤษ",both:"ไทยและอังกฤษ สลับได้จากหน้าเว็บ"}[lang];
+    const storTxt={
+      local:"เก็บข้อมูลทั้งหมดไว้ในเบราว์เซอร์ (localStorage หรือ IndexedDB ถ้าข้อมูลอาจมีจำนวนมาก) ปิดแล้วเปิดใหม่ข้อมูลต้องยังอยู่ และต้องมีปุ่ม ส่งออก / นำเข้า ข้อมูลทั้งหมดเป็นไฟล์ .json สำหรับสำรองข้อมูลและย้ายเครื่อง",
+      file:"วิธีบันทึกหลักคือไฟล์ .json: ปุ่ม บันทึก จะดาวน์โหลดข้อมูลปัจจุบัน ปุ่ม เปิด จะโหลดไฟล์ที่ผู้ใช้เลือก และให้เก็บสำเนาชั่วคราวใน localStorage เผื่อเผลอรีเฟรชหน้าจอข้อมูลจะไม่หาย",
+      none:"ไม่ต้องเก็บข้อมูลถาวร ใช้ในหน่วยความจำระหว่างเปิดใช้งานเท่านั้น"
+    }[storage];
+    return [
+`คุณคือวิศวกร Front-end อาวุโส ช่วยสร้างเว็บแอปแบบหน้าเดียวที่สมบูรณ์ในตัวเอง ฉันต้องเปิดใช้บนคอมพิวเตอร์ได้ด้วยการดับเบิลคลิกไฟล์ .html ไฟล์เดียว โดยไม่ต้องต่ออินเทอร์เน็ต`,
+``,
+`# ระบบนี้คืออะไร`,
+`ชื่อระบบ: ${name||"(ช่วยเสนอชื่อสั้น ๆ ให้ด้วย)"}`,
+`ใช้ทำอะไร: ${purpose||"(ไม่ได้ระบุ ให้อนุมานจากฟังก์ชันด้านล่างและบอกสมมติฐานไว้ต้นคำตอบ)"}`,
+`ใครใช้: ${users||"ผู้ใช้ทั่วไปคนเดียว ไม่ใช่สายเทคนิค"}`,
+`อุปกรณ์หลัก: ${devices.length?devices.join(", "):"คอมพิวเตอร์"}`,
+``,
+`# ฟังก์ชันที่ต้องมี (เรียงตามความสำคัญ)`,
+features.length?features.map((f,i)=>`${i+1}. ${f}`).join("\n"):`(ยังไม่ได้ระบุ ให้เสนอฟังก์ชันที่ระบบแบบนี้จำเป็นต้องมี 4–6 อย่าง แล้วสร้างให้เลย)`,
+``,
+`# ข้อมูล`,
+data?`ข้อมูลที่ต้องเก็บ:\n${data}`:`ออกแบบโครงสร้างข้อมูลเองจากวัตถุประสงค์และฟังก์ชัน ให้เรียบง่ายที่สุด และเขียนรายชื่อฟิลด์ไว้ในคอมเมนต์สั้น ๆ ต้นสคริปต์`,
+storTxt,
+``,
+`# การนำเข้าไฟล์จากภายนอก`,
+impYes?[
+`ระบบต้องให้ผู้ใช้นำเข้าไฟล์จากเครื่องได้ ทั้งผ่านปุ่มเลือกไฟล์และลากไฟล์มาวาง`,
+`นามสกุลไฟล์ที่ต้องรองรับ: ${impTypes.length?impTypes.join(", "):"(ไม่ได้ระบุ ให้เลือกรูปแบบที่เหมาะกับข้อมูลด้านบนและแจ้งไว้)"}`,
+impDesc?`นำเข้าอะไรและใช้อย่างไร:\n${impDesc}`:`จับคู่เนื้อหาที่นำเข้ากับโครงสร้างข้อมูลด้านบน แสดงตัวอย่างก่อนและให้ผู้ใช้กดยืนยันก่อนบันทึกจริง`,
+`อ่านไฟล์ทั้งหมดในเบราว์เซอร์โดยไม่ใช้ไลบรารี สำหรับไฟล์ Excel ถ้าอ่านโดยไม่ใช้ไลบรารีไม่ได้จริง ให้แจ้งผู้ใช้ชัดเจนในหน้าเว็บว่าให้บันทึกเป็น .csv ก่อน และแถวที่อ่านไม่ได้ต้องรายงานพร้อมเหตุผล ห้ามข้ามเงียบ ๆ`
+].join("\n"):`ไม่ต้องมีการนำเข้าไฟล์จากภายนอก ไม่ต้องเพิ่มฟังก์ชันนำเข้า`,
+``,
+`# การส่งออกข้อมูลเป็นไฟล์`,
+expYes?[
+`ระบบต้องให้ผู้ใช้ส่งออกข้อมูลเป็นไฟล์ดาวน์โหลดลงเครื่องได้`,
+`นามสกุลไฟล์ที่ต้องส่งออกได้: ${expTypes.length?expTypes.join(", "):"(ไม่ได้ระบุ ให้เลือกรูปแบบที่เหมาะกับข้อมูลด้านบนและแจ้งไว้)"}`,
+expDesc?`ส่งออกอะไรและใช้อย่างไร:\n${expDesc}`:`ให้ผู้ใช้เลือกได้ว่าจะส่งออกอะไร (ทั้งหมด, เฉพาะที่กรองอยู่, หรือช่วงวันที่ที่เลือก) และตั้งชื่อไฟล์ด้วยชื่อระบบและวันที่`,
+`สร้างไฟล์ทุกชนิดในเบราว์เซอร์โดยไม่ใช้ไลบรารี: CSV ต้องเปิดใน Excel แล้วภาษาไทยไม่เพี้ยน (UTF-8 มี BOM ครอบฟิลด์ด้วยเครื่องหมายคำพูด) สำหรับ .xlsx ถ้าเขียนโดยไม่ใช้ไลบรารีไม่ได้จริง ให้สร้าง CSV แทนและแจ้งในหน้าเว็บ ส่วน PDF ให้ผ่านหน้าต่างพิมพ์ของเบราว์เซอร์โดยมี stylesheet สำหรับพิมพ์โดยเฉพาะ`
+].join("\n"):`ไม่ต้องมีการส่งออกเป็นไฟล์ ไม่ต้องเพิ่มฟังก์ชันส่งออก`,
+``,
+`# หน้าตาและการใช้งาน`,
+`- ภาษาของหน้าเว็บ: ${langTxt}`,
+style?`- สไตล์: ${style}`:`- สไตล์: สะอาด อ่านง่าย เว้นระยะพอดี ลำดับความสำคัญชัด ไม่ใส่ของตกแต่งที่ไม่ช่วยงาน`,
+`- รองรับทุกขนาดหน้าจอ (มือถือ แท็บเล็ต คอมพิวเตอร์) ห้ามมีอะไรล้นออกด้านข้าง`,
+`- ทุกการกระทำต้องมีผลตอบกลับให้เห็น (ข้อความสถานะสั้น ๆ หรือการเปลี่ยนแปลงบนจอ) หน้าว่างต้องบอกว่าควรเริ่มทำอะไร ข้อผิดพลาดต้องบอกว่าผิดตรงไหนและแก้อย่างไร`,
+extras.length?extras.map(e=>`- ${e}`).join("\n"):null,
+notes?`\n# ข้อกำหนดเพิ่มเติม\n${notes}`:null,
+``,
+`# ข้อจำกัดทางเทคนิค (ต้องทำตามทุกข้อ)`,
+`- ไฟล์เดียวเท่านั้นคือ index.html รวม HTML, CSS และ JavaScript ไว้ในไฟล์เดียวกัน ไม่มีขั้นตอน build ไม่ใช้ framework ไม่ใช้ npm`,
+`- ห้ามใช้อินเทอร์เน็ตเด็ดขาด: ไม่มีลิงก์ CDN ไม่โหลดเว็บฟอนต์ ไม่มีรูปจากภายนอก ไม่เรียก API ใด ๆ ใช้ฟอนต์ของระบบและไอคอนแบบ SVG ฝังในไฟล์`,
+`- ต้องทำงานได้เมื่อเปิดผ่าน file:// โดยตรงบน Chrome, Edge, Firefox และ Safari รุ่นปัจจุบัน`,
+`- ใช้ JavaScript สมัยใหม่ธรรมดา (ES2020 ขึ้นไป) ไม่ใช้ TypeScript ไม่ใช้ไลบรารีภายนอก`,
+hasData?`- ห้ามทำข้อมูลผู้ใช้หายเงียบ ๆ: ตรวจสอบก่อนบันทึก ถามยืนยันก่อนการกระทำที่ย้อนกลับไม่ได้ และปุ่มส่งออกต้องใช้ได้ตลอดเวลา`:null,
+`- โค้ดต้องเป็นระเบียบ: ฟังก์ชันเล็กมีชื่อชัด มี state object เดียว มีฟังก์ชัน render หลักฟังก์ชันเดียว ใส่คอมเมนต์เฉพาะจุดที่เจตนาไม่ชัดเจน`,
+``,
+`# รูปแบบคำตอบ`,
+`1. เริ่มด้วยสมมติฐานที่คุณตั้งไว้ 3–5 บรรทัด`,
+`2. จากนั้นให้โค้ด index.html ทั้งไฟล์ในโค้ดบล็อกเดียว ครบถ้วนรันได้จริง ห้ามมีข้อความแทนที่แบบ “// โค้ดส่วนที่เหลือ”`,
+`3. ปิดท้ายด้วยวิธีใช้งานสั้น ๆ 3 บรรทัด ถ้าไฟล์ยาวเกินกว่าจะส่งในคำตอบเดียว ให้บอกก่อนแล้วแบ่งส่งเป็นส่วน ๆ ที่มีหมายเลขกำกับและนำมาต่อกันได้พอดี`
+    ].filter(x=>x!==null).join("\n");
+  }
+
+  let current="";
+  function update(){
+    current=build();
+    const esc=s=>s.replace(/&/g,"&amp;").replace(/</g,"&lt;");
+    const html=current.split("\n").map(l=>{
+      if(/^# /.test(l))return `<span class="k">${esc(l)}</span>`;
+      if(/^\(/.test(l)||/\(ยังไม่|\(ไม่ได้|\(ช่วย|\(please|\(not spec|\(none/.test(l))return `<span class="d">${esc(l)}</span>`;
+      return esc(l);
+    }).join("\n");
+    $("out").innerHTML=html;
+    $("count").textContent=`${current.length.toLocaleString()} ตัวอักษร`;
+    save();
+  }
+
+  // ---------- actions ----------
+  function toast(msg){const t=$("toast");t.textContent=msg;t.classList.add("show");clearTimeout(toast._t);toast._t=setTimeout(()=>t.classList.remove("show"),1600);}
+  $("copy").addEventListener("click",async()=>{
+    try{await navigator.clipboard.writeText(current);toast("คัดลอกแล้ว วางให้ AI ได้เลย");}
+    catch(e){
+      const r=document.createRange();r.selectNodeContents($("out"));
+      const s=getSelection();s.removeAllRanges();s.addRange(r);
+      toast("กด Ctrl+C / ⌘C เพื่อคัดลอก");
+    }
+  });
+  $("download").addEventListener("click",()=>{
+    const blob=new Blob([current],{type:"text/plain;charset=utf-8"});
+    const a=document.createElement("a");a.href=URL.createObjectURL(blob);
+    a.download=(($("name").value.trim()||"prompt").replace(/[\\/:*?"<>|]/g,"_"))+"-prompt.txt";
+    document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),500);
+  });
+  $("reset").addEventListener("click",()=>{
+    if(!confirm("ล้างทุกช่องในฟอร์มใช่ไหม"))return;
+    $("form").reset();features=[];
+    document.querySelectorAll("#devices .chip,#extras .chip,#impTypes .chip,#expTypes .chip").forEach(c=>c.setAttribute("aria-pressed","false"));
+    document.querySelector('#devices .chip').setAttribute("aria-pressed","true");
+    $("impBox").hidden=true;$("expBox").hidden=true;
+    renderFeatures();update();
+    try{localStorage.removeItem("pb:draft")}catch(e){}
+  });
+
+  // ---------- draft persistence (per-browser convenience) ----------
+  function save(){
+    try{
+      const d={
+        name:$("name").value,purpose:$("purpose").value,users:$("users").value,data:$("data").value,
+        style:$("style").value,notes:$("notes").value,features,storage:radio("storage"),lang:radio("lang"),plang:radio("plang"),
+        devices:pressed("devices"),extras:pressed("extras"),
+        imp:radio("imp"),impTypes:pressed("impTypes"),impOther:$("impOther").value,impDesc:$("impDesc").value,
+        exp:radio("exp"),expTypes:pressed("expTypes"),expOther:$("expOther").value,expDesc:$("expDesc").value
+      };
+      localStorage.setItem("pb:draft",JSON.stringify(d));
+    }catch(e){}
+  }
+  function load(){
+    try{
+      const d=JSON.parse(localStorage.getItem("pb:draft")||"null");if(!d)return;
+      ["name","purpose","users","data","style","notes","impOther","impDesc","expOther","expDesc"].forEach(k=>{if(typeof d[k]==="string")$(k).value=d[k]});
+      if(Array.isArray(d.features))features=d.features.filter(x=>typeof x==="string");
+      ["storage","lang","plang","imp","exp"].forEach(n=>{const el=document.querySelector(`input[name="${n}"][value="${d[n]}"]`);if(el)el.checked=true;});
+      $("impBox").hidden=radio("imp")!=="yes";
+      $("expBox").hidden=radio("exp")!=="yes";
+      [["devices",d.devices],["extras",d.extras],["impTypes",d.impTypes],["expTypes",d.expTypes]].forEach(([id,vals])=>{
+        if(!Array.isArray(vals))return;
+        $(id).querySelectorAll(".chip").forEach(c=>c.setAttribute("aria-pressed",String(vals.includes(c.dataset.v))));
+      });
+    }catch(e){}
+  }
+
+  $("form").addEventListener("input",update);
+  $("form").addEventListener("change",update);
+  load();renderFeatures();update();
+})();
+</script>
+</body>
+</html>
