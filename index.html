@@ -121,7 +121,7 @@ pre .d{color:var(--sheet-dim)}
 <div class="wrap">
 <header>
   <div>
-    <h1>บอกว่าอยากได้ระบบอะไร เดี๋ยวร่าง Prompt ให้เอาไปสั่ง AI</h1>
+    <h1>WebSparks เปลี่ยนความคิดเป็น Website</h1>
     <p class="lead">สำหรับเว็บแบบไฟล์เดียว (HTML เดียวจบ) ที่เปิดบนเครื่องได้โดยไม่ต้องต่ออินเทอร์เน็ต กรอกด้านซ้าย แล้ว Prompt ด้านขวาจะอัปเดตเองทันที</p>
   </div>
   <nav class="step-nav" aria-label="ขั้นตอน">
@@ -166,6 +166,16 @@ pre .d{color:var(--sheet-dim)}
       <label><input type="radio" name="storage" value="local" checked> ในเบราว์เซอร์ (localStorage/IndexedDB) ปิดเปิดแล้วข้อมูลยังอยู่</label>
       <label><input type="radio" name="storage" value="file"> บันทึก/เปิดจากไฟล์ (.json) เป็นหลัก</label>
       <label><input type="radio" name="storage" value="none"> ไม่ต้องเก็บ ใช้แล้วทิ้ง</label>
+      <label><input type="radio" name="storage" value="gsheet"> Google Sheets (ต้องมีอินเทอร์เน็ตตอนซิงค์)</label>
+      <label><input type="radio" name="storage" value="other"> อื่น ๆ ระบุเอง</label>
+    </div>
+    <div id="gsheetBox" hidden>
+      <label class="f" for="gsheetNote">รายละเอียด Google Sheets (ถ้ามี)</label>
+      <input type="text" id="gsheetNote" placeholder="เช่น มีชีตอยู่แล้วชื่อ สต๊อก 2026, แท็บละเดือน, อยากให้คนอื่นเปิดชีตดูได้ด้วย">
+    </div>
+    <div id="otherBox" hidden>
+      <label class="f" for="storageOther">อยากเก็บไว้ที่ไหน / อย่างไร</label>
+      <textarea id="storageOther" placeholder="เช่น เก็บเป็นไฟล์ .csv ในโฟลเดอร์ที่เลือก (File System Access API), หรือเก็บในเบราว์เซอร์และซิงค์ขึ้น Firebase ตอนมีเน็ต"></textarea>
     </div>
   </fieldset>
 
@@ -230,6 +240,7 @@ pre .d{color:var(--sheet-dim)}
       <label><input type="radio" name="lang" value="both"> สลับได้สองภาษา</label>
     </div>
     <label class="f">อุปกรณ์ที่ใช้เป็นหลัก</label>
+    <p class="hint">กดเลือกได้หลายอัน กดซ้ำเพื่อยกเลิก</p>
     <div class="chips" id="devices">
       <button type="button" class="chip" data-v="คอมพิวเตอร์" aria-pressed="true">คอมพิวเตอร์</button>
       <button type="button" class="chip" data-v="แท็บเล็ต" aria-pressed="false">แท็บเล็ต</button>
@@ -330,6 +341,7 @@ pre .d{color:var(--sheet-dim)}
 
   // ---------- toggle chips ----------
   $("imp").addEventListener("change",()=>{$("impBox").hidden=radio("imp")!=="yes";});
+  $("storage").addEventListener("change",()=>{const s=radio("storage");$("gsheetBox").hidden=s!=="gsheet";$("otherBox").hidden=s!=="other";});
   $("exp").addEventListener("change",()=>{$("expBox").hidden=radio("exp")!=="yes";});
   ["devices","extras","impTypes","expTypes"].forEach(id=>{
     $(id).querySelectorAll(".chip").forEach(c=>c.addEventListener("click",()=>{
@@ -346,6 +358,8 @@ pre .d{color:var(--sheet-dim)}
     const storage=radio("storage"), lang=radio("lang"), plang=radio("plang");
     const devices=pressed("devices"), extras=pressed("extras");
     const hasData=storage!=="none";
+    const online=storage==="gsheet";
+    const gsheetNote=$("gsheetNote").value.trim(), storageOther=$("storageOther").value.trim();
     const impYes=radio("imp")==="yes";
     const impTypes=pressed("impTypes").concat($("impOther").value.split(",").map(s=>s.trim()).filter(Boolean));
     const impDesc=$("impDesc").value.trim();
@@ -358,7 +372,9 @@ pre .d{color:var(--sheet-dim)}
       const storTxt={
         local:"Persist all data in the browser (localStorage, or IndexedDB if the data may grow large) so it survives closing and reopening the file. Also provide Export and Import of the entire dataset as a .json file for backup and moving between machines.",
         file:"The primary way to save and load is a .json file: a Save button downloads the current data, an Open button loads a file the user picks. Keep a working copy in localStorage so an accidental refresh loses nothing.",
-        none:"No persistence needed. Everything lives in memory for the session."
+        none:"No persistence needed. Everything lives in memory for the session.",
+        gsheet:`Store the data in a Google Sheet${gsheetNote?` (${gsheetNote})`:""}. Do it through a Google Apps Script web app (doGet/doPost returning JSON) bound to the sheet, called with fetch from the page; include the complete Apps Script code and step-by-step deployment instructions (Deploy > New deployment > Web app, Execute as me, Anyone with the link) and let the user paste the deployed URL into a settings panel in the app. Cache data in localStorage so the app still opens and queues changes while offline, then syncs when a connection is back and shows sync status clearly.`,
+        other:`Storage requirement from the user, follow it exactly:\n${storageOther||"(not specified; use localStorage and say so)"}`
       }[storage];
       return [
 `You are a senior front-end engineer. Build a complete, self-contained single-page web app that I can run on my computer by opening one .html file, with no internet connection.`,
@@ -402,7 +418,7 @@ notes?`\n# Additional requirements\n${notes}`:null,
 ``,
 `# Hard technical constraints`,
 `- Exactly ONE file: index.html containing all HTML, CSS and JavaScript inline. No build step, no frameworks, no npm.`,
-`- Zero network access: no CDN links, no web fonts, no external images, no API calls. Use system fonts and inline SVG for icons.`,
+`- Zero network access${online?" apart from calls to the Apps Script URL above":""}: no CDN links, no web fonts, no external images, no other API calls. Use system fonts and inline SVG for icons.`,
 `- Must work when opened directly via file:// in current Chrome, Edge, Firefox and Safari.`,
 `- Plain modern JavaScript (ES2020+), no TypeScript, no external libraries.`,
 hasData?`- Never lose user data silently: validate before saving, confirm before destructive actions, and keep Export working at all times.`:null,
@@ -420,7 +436,9 @@ hasData?`- Never lose user data silently: validate before saving, confirm before
     const storTxt={
       local:"เก็บข้อมูลทั้งหมดไว้ในเบราว์เซอร์ (localStorage หรือ IndexedDB ถ้าข้อมูลอาจมีจำนวนมาก) ปิดแล้วเปิดใหม่ข้อมูลต้องยังอยู่ และต้องมีปุ่ม ส่งออก / นำเข้า ข้อมูลทั้งหมดเป็นไฟล์ .json สำหรับสำรองข้อมูลและย้ายเครื่อง",
       file:"วิธีบันทึกหลักคือไฟล์ .json: ปุ่ม บันทึก จะดาวน์โหลดข้อมูลปัจจุบัน ปุ่ม เปิด จะโหลดไฟล์ที่ผู้ใช้เลือก และให้เก็บสำเนาชั่วคราวใน localStorage เผื่อเผลอรีเฟรชหน้าจอข้อมูลจะไม่หาย",
-      none:"ไม่ต้องเก็บข้อมูลถาวร ใช้ในหน่วยความจำระหว่างเปิดใช้งานเท่านั้น"
+      none:"ไม่ต้องเก็บข้อมูลถาวร ใช้ในหน่วยความจำระหว่างเปิดใช้งานเท่านั้น",
+      gsheet:`เก็บข้อมูลลง Google Sheets${gsheetNote?` (${gsheetNote})`:""} โดยทำผ่าน Google Apps Script แบบ Web app (doGet/doPost คืนค่าเป็น JSON) ที่ผูกกับชีต แล้วให้หน้าเว็บเรียกด้วย fetch ต้องให้โค้ด Apps Script ฉบับเต็มพร้อมขั้นตอนการ Deploy ทีละขั้น (Deploy > New deployment > Web app, Execute as me, Anyone with the link) และมีหน้าตั้งค่าในแอปให้ผู้ใช้วาง URL ที่ Deploy แล้ว ให้เก็บสำเนาใน localStorage เพื่อให้เปิดใช้และคิวการเปลี่ยนแปลงได้ตอนไม่มีเน็ต แล้วซิงค์เมื่อต่อเน็ตได้ โดยแสดงสถานะการซิงค์ให้เห็นชัด`,
+      other:`ข้อกำหนดการเก็บข้อมูลจากผู้ใช้ ให้ทำตามนี้เป๊ะ ๆ:\n${storageOther||"(ไม่ได้ระบุ ให้ใช้ localStorage และแจ้งไว้)"}`
     }[storage];
     return [
 `คุณคือวิศวกร Front-end อาวุโส ช่วยสร้างเว็บแอปแบบหน้าเดียวที่สมบูรณ์ในตัวเอง ฉันต้องเปิดใช้บนคอมพิวเตอร์ได้ด้วยการดับเบิลคลิกไฟล์ .html ไฟล์เดียว โดยไม่ต้องต่ออินเทอร์เน็ต`,
@@ -464,7 +482,7 @@ notes?`\n# ข้อกำหนดเพิ่มเติม\n${notes}`:null,
 ``,
 `# ข้อจำกัดทางเทคนิค (ต้องทำตามทุกข้อ)`,
 `- ไฟล์เดียวเท่านั้นคือ index.html รวม HTML, CSS และ JavaScript ไว้ในไฟล์เดียวกัน ไม่มีขั้นตอน build ไม่ใช้ framework ไม่ใช้ npm`,
-`- ห้ามใช้อินเทอร์เน็ตเด็ดขาด: ไม่มีลิงก์ CDN ไม่โหลดเว็บฟอนต์ ไม่มีรูปจากภายนอก ไม่เรียก API ใด ๆ ใช้ฟอนต์ของระบบและไอคอนแบบ SVG ฝังในไฟล์`,
+`- ห้ามใช้อินเทอร์เน็ต${online?" ยกเว้นการเรียก URL ของ Apps Script ตามข้อด้านบน":"เด็ดขาด"}: ไม่มีลิงก์ CDN ไม่โหลดเว็บฟอนต์ ไม่มีรูปจากภายนอก ไม่เรียก API อื่นใด ๆ ใช้ฟอนต์ของระบบและไอคอนแบบ SVG ฝังในไฟล์`,
 `- ต้องทำงานได้เมื่อเปิดผ่าน file:// โดยตรงบน Chrome, Edge, Firefox และ Safari รุ่นปัจจุบัน`,
 `- ใช้ JavaScript สมัยใหม่ธรรมดา (ES2020 ขึ้นไป) ไม่ใช้ TypeScript ไม่ใช้ไลบรารีภายนอก`,
 hasData?`- ห้ามทำข้อมูลผู้ใช้หายเงียบ ๆ: ตรวจสอบก่อนบันทึก ถามยืนยันก่อนการกระทำที่ย้อนกลับไม่ได้ และปุ่มส่งออกต้องใช้ได้ตลอดเวลา`:null,
@@ -512,7 +530,7 @@ hasData?`- ห้ามทำข้อมูลผู้ใช้หายเง
     $("form").reset();features=[];
     document.querySelectorAll("#devices .chip,#extras .chip,#impTypes .chip,#expTypes .chip").forEach(c=>c.setAttribute("aria-pressed","false"));
     document.querySelector('#devices .chip').setAttribute("aria-pressed","true");
-    $("impBox").hidden=true;$("expBox").hidden=true;
+    $("impBox").hidden=true;$("expBox").hidden=true;$("gsheetBox").hidden=true;$("otherBox").hidden=true;
     renderFeatures();update();
     try{localStorage.removeItem("pb:draft")}catch(e){}
   });
@@ -525,7 +543,8 @@ hasData?`- ห้ามทำข้อมูลผู้ใช้หายเง
         style:$("style").value,notes:$("notes").value,features,storage:radio("storage"),lang:radio("lang"),plang:radio("plang"),
         devices:pressed("devices"),extras:pressed("extras"),
         imp:radio("imp"),impTypes:pressed("impTypes"),impOther:$("impOther").value,impDesc:$("impDesc").value,
-        exp:radio("exp"),expTypes:pressed("expTypes"),expOther:$("expOther").value,expDesc:$("expDesc").value
+        exp:radio("exp"),expTypes:pressed("expTypes"),expOther:$("expOther").value,expDesc:$("expDesc").value,
+        gsheetNote:$("gsheetNote").value,storageOther:$("storageOther").value
       };
       localStorage.setItem("pb:draft",JSON.stringify(d));
     }catch(e){}
@@ -533,11 +552,12 @@ hasData?`- ห้ามทำข้อมูลผู้ใช้หายเง
   function load(){
     try{
       const d=JSON.parse(localStorage.getItem("pb:draft")||"null");if(!d)return;
-      ["name","purpose","users","data","style","notes","impOther","impDesc","expOther","expDesc"].forEach(k=>{if(typeof d[k]==="string")$(k).value=d[k]});
+      ["name","purpose","users","data","style","notes","impOther","impDesc","expOther","expDesc","gsheetNote","storageOther"].forEach(k=>{if(typeof d[k]==="string")$(k).value=d[k]});
       if(Array.isArray(d.features))features=d.features.filter(x=>typeof x==="string");
       ["storage","lang","plang","imp","exp"].forEach(n=>{const el=document.querySelector(`input[name="${n}"][value="${d[n]}"]`);if(el)el.checked=true;});
       $("impBox").hidden=radio("imp")!=="yes";
       $("expBox").hidden=radio("exp")!=="yes";
+      $("gsheetBox").hidden=radio("storage")!=="gsheet";$("otherBox").hidden=radio("storage")!=="other";
       [["devices",d.devices],["extras",d.extras],["impTypes",d.impTypes],["expTypes",d.expTypes]].forEach(([id,vals])=>{
         if(!Array.isArray(vals))return;
         $(id).querySelectorAll(".chip").forEach(c=>c.setAttribute("aria-pressed",String(vals.includes(c.dataset.v))));
